@@ -1,0 +1,28 @@
+name: video-hw-proxyapi
+
+services:
+  app:
+    build:
+      context: .
+      target: development
+    env_file:
+      - .env
+    command: python main.py
+    volumes:
+      - ./outputs:/app/outputs
+    stdin_open: true
+    tty: true
+
+  status:
+    build:
+      context: .
+      target: development
+    env_file:
+      - .env
+    command: python test.py
+    volumes:
+      - ./outputs:/app/outputs
+    profiles:
+      - status
+    stdin_open: true
+    tty: true

@@ -1,0 +1,15 @@
+[project]
+name = "video-hw-proxyapi"
+version = "0.1.0"
+description = "Homework project for video generation via Proxy API"
+requires-python = ">=3.11"
+dependencies = [
+  "openai",
+  "python-dotenv",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

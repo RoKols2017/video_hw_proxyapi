@@ -1,0 +1,10 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+.opencode/
+.ai-factory.json
+outputs/*.mp4
+outputs/*.json
+outputs/*.txt

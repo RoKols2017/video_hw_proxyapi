@@ -1,0 +1,36 @@
+# Implementation Plan: Homework ProxyAPI Video Generator
+
+Branch: none
+Created: 2026-04-20
+
+## Settings
+- Testing: yes
+- Logging: verbose
+- Docs: yes
+
+## Commit Plan
+- **Commit 1** (after tasks 1-3): `chore: scaffold validated config and shared core models`
+- **Commit 2** (after tasks 4-6): `feat: implement proxyapi video workflow and cli flows`
+- **Commit 3** (after tasks 7-9): `docs: finalize homework documentation and verification flow`
+
+## Tasks
+
+### Phase 1: Foundation and validated configuration
+- [x] Task 1: Finalize package and runtime metadata in `pyproject.toml`, `.env.example`, `main.py`, and `test.py` so the project boots exactly through `python main.py` and `python test.py`, keeps both entrypoints thin, and exposes only delegated CLI calls. LOGGING REQUIREMENTS: define environment-driven logging support (`LOG_LEVEL`) in the plan for later implementation; log application startup, selected entrypoint, and bootstrap failures at the CLI boundary; use DEBUG for configuration bootstrap details, INFO for startup events, and ERROR for fatal bootstrap exceptions.
+- [x] Task 2: Implement `src/video_app/config/settings.py` with `load_dotenv()`, `Settings` dataclass, and `get_settings()` that validates `PROXYAPI_API_KEY`, `VIDEO_MODEL`, `VIDEO_SECONDS`, `VIDEO_OUTPUT_DIR`, and `POLL_INTERVAL_SECONDS`, including strict constraints that only `veo-3-fast` or `sora-2` are allowed and only `4` seconds is valid. LOGGING REQUIREMENTS: log settings load entry, raw source presence without leaking secrets, normalized values, validation failures, and successful settings creation; use DEBUG for loaded field names and derived defaults, INFO for valid configuration, WARN/ERROR for invalid or missing values.
+- [x] Task 3: Implement shared domain helpers in `src/video_app/core/models.py`, `src/video_app/core/progress.py`, and `src/video_app/core/storage.py` so the core layer has typed result models, pure ASCII progress formatting helpers, and filesystem utilities for `outputs/`, `last_video_id.txt`, and deterministic MP4 naming. LOGGING REQUIREMENTS: log model-to-dict conversions only where needed outside dataclasses, storage directory creation, save/load of last video id, computed output paths, and progress rendering inputs; use DEBUG for path calculations and progress state, INFO for directory creation and file persistence, ERROR for filesystem failures.
+
+### Phase 2: ProxyAPI integration and reusable service API
+- [x] Task 4: Implement `src/video_app/core/client.py` to create a configured OpenAI Python client for ProxyAPI with the correct OpenAI-compatible base URL and the direct OpenAI-style videos endpoint path needed for `sora-2`, while keeping the factory isolated behind `get_openai_client(settings)`. LOGGING REQUIREMENTS: log client factory entry, selected base URL strategy, model family routing decision, and client creation success without logging API keys; use DEBUG for routing decisions and endpoint selection, INFO for client initialization, ERROR for unsupported model family or client setup failure.
+- [x] Task 5: Implement `src/video_app/core/service.py` functions `create_video_task`, `get_video_status`, `wait_for_video_completion`, `download_video_file`, and `generate_video` so the public backend API is reusable from CLI, future Telegram, and future Flask without terminal-specific dependencies. Support `on_update` callbacks on status/progress changes, careful error translation, and MP4 download flow. LOGGING REQUIREMENTS: log entry/exit of every public service function, outgoing API calls, returned `video_id`, status transitions, progress changes, callback invocations, polling sleeps, download start/finish, and raised errors with context; use DEBUG for polling loop internals and callback payloads, INFO for created jobs/status milestones/download completion, ERROR for API or download failures.
+- [x] Task 6: In `src/video_app/core/service.py`, implement model-aware execution strategy for both homework models: use the OpenAI videos flow for `sora-2`; design a clean provider branch for `veo-3-fast` that follows the same public service contract and can evolve later without changing the `core.service` API. Keep provider-specific details inside the core layer only. LOGGING REQUIREMENTS: log provider selection, provider-specific request payload shape, long-running status checks, terminal state mapping, and normalization into shared dataclasses; use DEBUG for provider branching and payload construction, INFO for provider-level milestones, ERROR for unsupported response structures or provider-specific failures.
+
+### Phase 3: CLI flows for homework screenshots
+- [x] Task 7: Implement `src/video_app/cli/main.py` so it loads settings, uses a custom cinematic prompt that is explicitly not about coffee, calls `core.service.generate_video(...)`, prints the selected model, `video_id`, textual progress, and final file path, and persists `last_video_id` in `outputs/last_video_id.txt`. LOGGING REQUIREMENTS: log CLI run start, prompt selection, service invocation, every rendered status/progress update, save of last video id, and top-level exception handling; use DEBUG for prompt and callback formatting details, INFO for visible milestones and final success, ERROR for user-facing failure paths.
+- [x] Task 8: Implement `src/video_app/cli/status_check.py` so it resolves `video_id` from `argv` or `outputs/last_video_id.txt`, calls `core.service.get_video_status(...)`, and prints only the current status/progress without downloading the video. Keep argument handling fully inside the CLI layer. LOGGING REQUIREMENTS: log argument parsing, source of resolved video id, service call boundaries, rendered status output, and missing-id failure path; use DEBUG for argv parsing and fallback decisions, INFO for successful status retrieval, WARN/ERROR for absent id or service errors.
+
+### Phase 4: Documentation and delivery fit
+- [x] Task 9: Rewrite `README.md` so it matches the implemented behavior and homework expectations: clear part 1 run instructions, project structure explanation, environment setup, model constraints, generated artifact locations, and explicit explanation that Telegram bot and Flask app in part 2 will reuse `core.service` with callback-based progress updates. Keep docs aligned with the current implementation rather than the earlier placeholder state. LOGGING REQUIREMENTS: no runtime code changes required, but document logging behavior and troubleshooting entry points for users; if implementation adds new files or folders beyond the current map, refresh `AGENTS.md` and `.ai-factory/ARCHITECTURE.md` accordingly.
+
+### Phase 5: Verification and submission readiness
+- [x] Task 10: Perform end-to-end verification of the implemented flow using safe local checks: import validation, `python main.py` startup path, `python test.py` startup path, configuration error scenarios, and static syntax compilation. Confirm that outputs go to `outputs/`, that CLI layers stay thin, and that the core API remains reusable for part 2. LOGGING REQUIREMENTS: verify that DEBUG/INFO/ERROR logs are emitted at the expected boundaries, ensure secrets are never printed, and confirm that failure messages are understandable for homework screenshots; record and fix any final mismatches discovered during verification.

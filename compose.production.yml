@@ -1,0 +1,27 @@
+name: video-hw-proxyapi
+
+services:
+  app:
+    build:
+      context: .
+      target: production
+    env_file:
+      - .env
+    command: python main.py
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    volumes:
+      - ./outputs:/app/outputs
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "3"
