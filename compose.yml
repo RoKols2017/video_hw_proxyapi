@@ -13,6 +13,16 @@ services:
     stdin_open: true
     tty: true
 
+  web:
+    build:
+      context: .
+      target: development
+    env_file:
+      - .env
+    command: python app.py
+    stdin_open: true
+    tty: true
+
   status:
     build:
       context: .

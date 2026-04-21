@@ -47,7 +47,7 @@ def get_settings() -> Settings:
         from dotenv import load_dotenv
     except ModuleNotFoundError as exc:
         raise RuntimeError(
-            "Dependency python-dotenv is not installed. Install project dependencies before running the CLI."
+            "Dependency python-dotenv is not installed. Install project dependencies before running the application."
         ) from exc
 
     load_dotenv()

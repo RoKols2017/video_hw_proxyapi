@@ -6,6 +6,8 @@ requires-python = ">=3.11"
 dependencies = [
   "openai",
   "python-dotenv",
+  "flask",
+  "pyTelegramBotAPI",
 ]
 
 [tool.setuptools]

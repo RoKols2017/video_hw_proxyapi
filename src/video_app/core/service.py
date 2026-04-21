@@ -127,31 +127,71 @@ def generate_video(
     on_update: StatusCallback | None = None,
 ) -> VideoGenerationResult:
     logger.info("[service.generate_video] generating video", extra={"video_model": settings.video_model})
-    created = create_video_task(prompt, settings)
+    created: VideoTaskCreateResult | None = None
+    try:
+        created = create_video_task(prompt, settings)
 
-    initial_status = VideoTaskStatus(
-        video_id=created.video_id,
-        status=created.status,
-        progress=created.progress,
-        model=created.model,
-        seconds=created.seconds,
-        provider=created.provider,
-    )
-    _emit_update(on_update, initial_status)
+        initial_status = VideoTaskStatus(
+            video_id=created.video_id,
+            status=created.status,
+            progress=created.progress,
+            model=created.model,
+            seconds=created.seconds,
+            provider=created.provider,
+        )
+        _emit_update(on_update, initial_status)
 
-    completed = wait_for_video_completion(created.video_id, settings, on_update=on_update)
-    output_path = download_video_file(created.video_id, settings)
-    result = VideoGenerationResult(
-        video_id=created.video_id,
-        status=completed.status,
-        progress=completed.progress,
-        output_path=output_path,
-        model=completed.model,
-        seconds=completed.seconds,
-        provider=completed.provider,
-    )
-    logger.info("[service.generate_video] generation completed", extra={"video_id": result.video_id, "output_path": result.output_path})
-    return result
+        completed = wait_for_video_completion(created.video_id, settings, on_update=on_update)
+        _emit_update(
+            on_update,
+            VideoTaskStatus(
+                video_id=completed.video_id,
+                status="downloading",
+                progress=max(99.0, completed.progress or 0.0),
+                model=completed.model,
+                seconds=completed.seconds,
+                provider=completed.provider,
+            ),
+        )
+
+        output_path = download_video_file(created.video_id, settings)
+        result = VideoGenerationResult(
+            video_id=created.video_id,
+            status=completed.status,
+            progress=100.0,
+            output_path=output_path,
+            model=completed.model,
+            seconds=completed.seconds,
+            provider=completed.provider,
+        )
+        _emit_update(
+            on_update,
+            VideoTaskStatus(
+                video_id=result.video_id,
+                status="completed",
+                progress=100.0,
+                model=result.model,
+                seconds=result.seconds,
+                provider=result.provider,
+            ),
+        )
+        logger.info("[service.generate_video] generation completed", extra={"video_id": result.video_id, "output_path": result.output_path})
+        return result
+    except Exception as exc:  # noqa: BLE001
+        logger.error("[service.generate_video] generation failed", exc_info=exc)
+        _emit_update(
+            on_update,
+            VideoTaskStatus(
+                video_id=created.video_id if created is not None else "unknown",
+                status="error",
+                progress=None,
+                model=created.model if created is not None else settings.video_model,
+                seconds=created.seconds if created is not None else settings.video_seconds,
+                provider=created.provider if created is not None else resolve_provider_config(settings).provider,
+                error_message=str(exc),
+            ),
+        )
+        raise
 
 
 def _emit_update(callback: StatusCallback | None, status: VideoTaskStatus) -> None:

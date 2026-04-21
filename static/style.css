@@ -1,0 +1,92 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  background: linear-gradient(120deg, #f6f8fb 0%, #e8eef7 100%);
+  color: #1e2430;
+}
+
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: 0 10px 28px rgba(23, 36, 54, 0.12);
+}
+
+h1 {
+  margin: 0 0 6px;
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  color: #4a5568;
+}
+
+form {
+  display: grid;
+  gap: 10px;
+}
+
+label {
+  font-weight: 600;
+}
+
+textarea {
+  resize: vertical;
+  border: 1px solid #c7d2e3;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+}
+
+button {
+  width: fit-content;
+  border: 0;
+  border-radius: 8px;
+  background: #1f5ec9;
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #174ba2;
+}
+
+#task-section {
+  margin-top: 24px;
+}
+
+.progress-wrap {
+  margin: 8px 0 12px;
+  width: 100%;
+  height: 18px;
+  background: #e5ebf5;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #2b6ee5, #44b4ff);
+  transition: width 0.35s ease;
+}
+
+.error {
+  color: #b83333;
+  min-height: 18px;
+}
+
+a {
+  display: inline-block;
+  margin-top: 8px;
+  color: #1f5ec9;
+  font-weight: 600;
+}
+
+.hidden {
+  display: none;
+}

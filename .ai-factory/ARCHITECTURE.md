@@ -15,6 +15,8 @@ For this project, layered architecture is a better fit than heavier patterns bec
 .
 |-- main.py                          # Thin entrypoint for generation CLI
 |-- test.py                          # Thin entrypoint for status-check CLI
+|-- bot.py                           # Thin entrypoint for Telegram bot
+|-- app.py                           # Thin entrypoint for Flask web app
 `-- src/video_app/
     |-- cli/                         # Presentation layer for terminal interaction
     |   |-- main.py                  # CLI flow for generate command
@@ -27,9 +29,9 @@ For this project, layered architecture is a better fit than heavier patterns bec
     |   |-- progress.py              # Pure text progress formatting helpers
     |   |-- service.py               # Reusable application service API
     |   `-- storage.py               # Output file and local persistence helpers
-    `-- interfaces/                  # Future non-CLI adapters
-        |-- bot.py                   # Planned Telegram interface
-        `-- app.py                   # Planned Flask interface
+    `-- interfaces/                  # Non-CLI adapters
+        |-- telegram_bot.py          # Telegram interface implementation
+        `-- flask_app.py             # Flask interface implementation
 ```
 
 ## Dependency Rules

@@ -13,7 +13,5 @@ __pycache__
 .opencode
 .ai-factory
 outputs
-static
-templates
 prompts
 docs-html
