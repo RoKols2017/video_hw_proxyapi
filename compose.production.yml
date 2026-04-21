@@ -49,6 +49,29 @@ services:
         max-size: 20m
         max-file: "3"
 
+  bot:
+    build:
+      context: .
+      target: production
+    env_file:
+      - .env
+    command: python bot.py
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    pids_limit: 128
+    mem_limit: 256m
+    cpus: 0.5
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "3"
+
   nginx:
     image: nginx:1.27-alpine
     depends_on:

@@ -7,17 +7,11 @@
 ## Quick Start
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
 cp .env.example .env
+docker compose up --build web
 ```
 
-```bash
-python main.py
-python bot.py
-python app.py
-```
+Для VPS этот проект разворачивается только через Docker Compose. `venv`, `pip install` и ручной запуск Python-процессов на сервере не требуются.
 
 ## Key Features
 
@@ -31,10 +25,10 @@ python app.py
 ## Example
 
 ```bash
-python main.py
-python test.py
+docker compose up --build web
+docker compose --profile cli up app
+docker compose --profile status run --rm status
 python bot.py
-python app.py
 ```
 
 ---
@@ -49,6 +43,19 @@ python app.py
 | [CLI](docs/cli.md) | Консольные entrypoint'ы и сценарии |
 | [Interfaces](docs/interfaces.md) | Telegram-бот и Flask-сайт |
 | [Deployment](docs/deployment.md) | Docker, nginx, домен и сертификаты |
+
+## VPS Deploy
+
+Для production/VPS используется только Docker Compose:
+
+```bash
+NGINX_DOMAIN=your-domain.com SSL_CERTS_DIR=/root/cert/your-domain.com docker compose -f compose.yml -f compose.production.yml up -d --build web bot nginx
+```
+
+Что поднимется:
+- `web` — Flask-приложение
+- `bot` — Telegram-бот
+- `nginx` — reverse proxy с TLS
 
 ## License
 
