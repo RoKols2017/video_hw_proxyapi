@@ -52,10 +52,12 @@ Python project for homework-driven video generation through a Proxy API with thr
 | Document | Path | Description |
 |----------|------|-------------|
 | README | `README.md` | Project landing page. |
-| Getting Started | `docs/getting-started.md` | Installation, setup, first run. |
-| Architecture | `docs/architecture.md` | Layers and dependency rules. |
-| Configuration | `docs/configuration.md` | Environment variables and constraints. |
-| CLI | `docs/cli.md` | Entrypoints and run scenarios. |
+| Getting Started | `docs/getting-started.md` | Installation, env, first run. |
+| Architecture | `docs/architecture.md` | Backend layers and boundaries. |
+| Configuration | `docs/configuration.md` | Env vars and constraints. |
+| CLI | `docs/cli.md` | CLI entrypoints and scenarios. |
+| Interfaces | `docs/interfaces.md` | Telegram bot and Flask UI. |
+| Deployment | `docs/deployment.md` | Docker, nginx, domain, TLS. |
 | Homework spec | `.ai-factory/specs/hw-video-proxyapi-evolvable.md` | Implementation requirements. |
 | Interface note | `src/video_app/interfaces/README.md` | Implemented bot and web interfaces. |
 

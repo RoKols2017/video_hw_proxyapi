@@ -4,13 +4,7 @@
 
 ## Что это за проект
 
-`video_hw_proxyapi` готовит CLI-решение для домашнего задания по генерации видео через Proxy API. Первая часть фокусируется на локальном запуске и разделении кода, вторая будет использовать то же ядро из Telegram-бота и Flask-приложения.
-
-## Текущее состояние
-
-- В репозитории уже есть Python-пакет, entrypoint'ы и архитектурные документы.
-- Реализация должна следовать спецификации в `.ai-factory/specs/hw-video-proxyapi-evolvable.md`.
-- Команды `python main.py` и `python test.py` зарезервированы как основные способы запуска.
+`video_hw_proxyapi` — учебный продукт для генерации видео через ProxyAPI. Он уже включает три интерфейса: консольный запуск, Telegram-бот и Flask-сайт. Все они работают через общий backend в `src/video_app/core`.
 
 ## Требования
 
@@ -18,26 +12,30 @@
 |-----------|------------|
 | Python | 3.11+ |
 | Пакетный менеджер | `pip` |
-| Зависимости | `openai`, `python-dotenv` |
-| Секреты | Через `.env` |
+| Основные зависимости | `openai`, `python-dotenv`, `flask`, `pyTelegramBotAPI` |
+| Секреты | Только через `.env` |
 
 ## Установка
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Альтернатива:
+
+```bash
 pip install -e .
 ```
 
-## Настройка окружения
-
-Создайте локальный `.env` на основе примера:
+## Настройка `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-Минимальный набор настроек уже описан в `.env.example`:
+Минимально нужно заполнить:
 
 ```env
 PROXYAPI_API_KEY=
@@ -45,27 +43,45 @@ VIDEO_MODEL=veo-3-fast
 VIDEO_SECONDS=4
 VIDEO_OUTPUT_DIR=outputs
 POLL_INTERVAL_SECONDS=5
+LOG_LEVEL=DEBUG
+BOT_TOKEN=
+FLASK_HOST=0.0.0.0
+FLASK_PORT=5000
 ```
 
 ## Первый запуск
 
-Основные команды проекта:
+### CLI
 
 ```bash
 python main.py
 python test.py
 ```
 
-`main.py` предназначен для запуска генерации, а `test.py` для отдельной проверки статуса по `video_id`. Если прикладная часть ещё не реализована, ориентируйтесь на эти команды как на целевой интерфейс проекта.
+### Telegram-бот
 
-## Что проверить после запуска
+```bash
+python bot.py
+```
 
-- Интерпретатор видит пакет из `src/`.
-- Значения в `.env` читаются без хардкода секретов.
-- Папка `outputs/` используется как целевой каталог для артефактов.
+### Flask
+
+```bash
+python app.py
+```
+
+После запуска сайт будет доступен на `http://localhost:5000`.
+
+## Что проверить
+
+- `.env` читается без хардкода секретов.
+- `outputs/` создаётся автоматически.
+- `python main.py` сохраняет `last_video_id.txt`.
+- `python test.py` может прочитать `video_id` из `outputs/`.
+- `bot.py` и `app.py` стартуют без автогенерации при import.
 
 ## See Also
 
-- [Architecture](architecture.md) — как разделены слои и зависимости.
-- [Configuration](configuration.md) — что означает каждая переменная окружения.
-- [CLI](cli.md) — какие entrypoint'ы предусмотрены в проекте.
+- [Architecture](architecture.md) — как общий backend используется во всех интерфейсах.
+- [Configuration](configuration.md) — все переменные окружения и значения.
+- [Interfaces](interfaces.md) — как работают Telegram и Flask.

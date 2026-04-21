@@ -4,52 +4,70 @@
 
 ## Выбранный паттерн
 
-Проект зафиксирован на `Layered Architecture`. Для текущего масштаба это даёт понятные границы между CLI, конфигурацией, переиспользуемым ядром и будущими интерфейсами без лишней сложности.
+Проект остаётся на `Layered Architecture`. Это даёт простые и понятные границы между конфигурацией, service-layer, CLI и интерфейсами второй части.
 
-Подробные правила зафиксированы в `.ai-factory/ARCHITECTURE.md`. Этот файл объясняет, почему выбран именно такой паттерн и какие зависимости допустимы между слоями.
+Подробные правила также зафиксированы в `.ai-factory/ARCHITECTURE.md`.
 
-## Структура каталогов
+## Слои проекта
 
 ```text
-main.py                      # Запуск CLI генерации
-test.py                      # Запуск CLI проверки статуса
-src/video_app/
-  cli/                       # Команды и вывод в терминал
-  config/                    # Загрузка и валидация настроек
-  core/                      # Основная логика и интеграции
-  interfaces/                # Будущие bot.py и app.py
-outputs/                     # Скачанные видео и runtime-артефакты
+main.py / test.py                  # Тонкие CLI entrypoint'ы
+bot.py / app.py                    # Тонкие interface entrypoint'ы
+src/video_app/config/              # Загрузка и валидация env
+src/video_app/core/                # Общий backend/service layer
+src/video_app/cli/                 # Терминальный UX
+src/video_app/interfaces/          # Telegram и Flask адаптеры
+templates/ + static/               # Flask frontend
+outputs/                           # Скачанные видео и служебные файлы
 ```
 
-## Правила зависимостей
+## Service layer
+
+Общий backend API находится в `src/video_app/core/service.py`.
+
+Основные функции:
+
+- `create_video_task(...)`
+- `get_video_status(...)`
+- `wait_for_video_completion(..., on_update=None)`
+- `download_video_file(...)`
+- `generate_video(..., on_update=None)`
+
+Эти функции:
+
+- не зависят от terminal UI;
+- возвращают структурированные модели;
+- используют callback `on_update` для прогресса;
+- подходят для CLI, Telegram и Flask без дублирования сетевой логики.
+
+## Что где находится
+
+| Слой | Ответственность |
+|------|------------------|
+| `config` | env, dataclass `Settings`, валидация |
+| `core` | ProxyAPI, poll loop, скачивание, dataclass-модели |
+| `cli` | печать в терминал, argv, пользовательский вывод |
+| `interfaces` | Telegram handlers, Flask routes, threading |
+
+## Зависимости между слоями
 
 | Откуда | Куда можно зависеть |
 |--------|----------------------|
-| `main.py`, `test.py` | Только в `src.video_app.cli` |
+| `main.py`, `test.py`, `bot.py`, `app.py` | Только в специализированные entrypoint модули |
 | `src.video_app.cli` | В `config` и `core` |
-| `src.video_app.core` | Во внутренние модули `core`, но не в `cli` |
-| `src.video_app.interfaces` | В `config` и `core` после реализации |
+| `src.video_app.interfaces` | В `config` и `core` |
+| `src.video_app.core` | Во внутренние модули `core`, но не в `cli` и не в `interfaces` |
 
-## Что важно не смешивать
+## Как работает progress update
 
-- парсинг CLI-аргументов;
-- вывод прогресса в терминал;
-- сетевые вызовы к Proxy API;
-- файловые операции с `outputs/`;
-- бизнес-логику генерации и опроса статуса.
+- CLI передаёт callback, который печатает статусы в терминал.
+- Telegram использует callback для обновления одного сообщения в чате.
+- Flask использует callback для обновления состояния задачи в in-memory словаре по `task_id`.
 
-## Переход ко второй части
-
-Текущая структура нужна не только для CLI. Telegram-бот и Flask-приложение должны использовать те же сервисные функции из `core.service`, а не копировать workflow отдельно.
-
-Это означает:
-
-- прогресс должен передаваться через callback;
-- core-слой не должен знать про terminal UI;
-- будущие `bot.py` и `app.py` подключаются поверх уже существующего service API.
+Такой подход позволяет переиспользовать backend без print-ориентированной привязки.
 
 ## See Also
 
-- [Getting Started](getting-started.md) — как поднять окружение и запустить проект.
-- [Configuration](configuration.md) — переменные окружения и ограничения значений.
-- [CLI](cli.md) — пользовательские сценарии через `main.py` и `test.py`.
+- [Configuration](configuration.md) — как настройки попадают в backend и интерфейсы.
+- [CLI](cli.md) — как устроен терминальный слой.
+- [Interfaces](interfaces.md) — Telegram и Flask поверх общего service-layer.

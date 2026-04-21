@@ -1,4 +1,4 @@
-[← Configuration](configuration.md) · [Back to README](../README.md)
+[← Configuration](configuration.md) · [Back to README](../README.md) · [Interfaces →](interfaces.md)
 
 # CLI
 
@@ -6,56 +6,59 @@
 
 | Файл | Назначение |
 |------|------------|
-| `main.py` | Тонкий вход для генерации видео |
-| `test.py` | Тонкий вход для проверки статуса |
+| `main.py` | Генерация видео |
+| `test.py` | Проверка статуса |
 
-Оба файла уже существуют и должны оставаться минимальными: они только импортируют `run()` из CLI-слоя.
+Оба файла остаются тонкими entrypoint'ами и только делегируют в `src.video_app.cli.*`.
 
-## Целевые сценарии запуска
-
-### Генерация
+## `python main.py`
 
 ```bash
 python main.py
 ```
 
-Ожидаемое поведение по спецификации:
+Что делает:
 
-- вызвать `src.video_app.cli.main.run`;
-- вывести модель, `video_id`, прогресс и итоговый путь;
-- сохранить `last_video_id` в `outputs/last_video_id.txt`.
+- загружает настройки;
+- использует кастомный кинематографичный prompt;
+- вызывает `core.service.generate_video(...)`;
+- печатает модель, `video_id`, прогресс и итоговый путь;
+- сохраняет `outputs/last_video_id.txt`.
 
-### Проверка статуса
+## `python test.py`
 
 ```bash
 python test.py
+python test.py <video_id>
 ```
 
-Ожидаемое поведение по спецификации:
+Что делает:
 
-- вызвать `src.video_app.cli.status_check.run`;
-- взять `video_id` из аргумента CLI или из `outputs/last_video_id.txt`;
-- вывести только статус, без скачивания видео.
+- вызывает `core.service.get_video_status(...)`;
+- читает `video_id` из argv или `outputs/last_video_id.txt`;
+- печатает статус и прогресс;
+- не скачивает видео.
 
-## Почему CLI держится отдельно
+## Почему CLI не содержит backend-логику
 
-CLI-слой нужен для терминального UX, но не должен владеть бизнес-логикой. Весь workflow генерации и проверки статуса должен жить в `core.service`, чтобы тот же API могли использовать будущие `bot.py` и `app.py`.
+CLI нужен только для терминального UX. Всё, что относится к ProxyAPI, poll loop, скачиванию MP4 и provider-specific логике, находится в `core.service` и переиспользуется в Telegram/Flask.
 
 ## Что относится к CLI-слою
 
-- чтение аргументов и пользовательского ввода;
-- печать прогресса и статусов;
-- выбор, как показывать ошибки в терминале.
+- чтение аргументов;
+- печать статусов;
+- вывод ошибок пользователю;
+- выбор, как отобразить progress bar.
 
 ## Что не относится к CLI-слою
 
-- создание API-клиента;
-- poll loop и бизнес-решения;
-- сохранение MP4 и служебных файлов;
-- dataclass-модели результата.
+- сетевые вызовы к ProxyAPI;
+- poll loop и state machine задачи;
+- скачивание MP4;
+- dataclass-модели результатов.
 
 ## See Also
 
-- [Getting Started](getting-started.md) — команды установки и первый запуск.
-- [Architecture](architecture.md) — границы между CLI, config и core.
-- [Configuration](configuration.md) — настройки, которые CLI передаёт дальше в сервисы.
+- [Interfaces](interfaces.md) — как тот же backend используется в Telegram и Flask.
+- [Architecture](architecture.md) — границы между слоями.
+- [Getting Started](getting-started.md) — быстрый запуск CLI.
