@@ -8,7 +8,11 @@ const progressBarEl = document.getElementById("progress-bar");
 const errorEl = document.getElementById("error");
 const downloadLinkEl = document.getElementById("download-link");
 
+const TASK_STORAGE_KEY = "video-hw-proxyapi.task-id";
+
 let pollTimer = null;
+
+restoreTaskFromStorage();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -18,6 +22,7 @@ form.addEventListener("submit", async (event) => {
   }
 
   clearPoll();
+  clearPersistedTaskId();
   resetUi();
 
   const response = await fetch("/generate", {
@@ -32,6 +37,7 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
+  persistTaskId(payload.task_id);
   taskSection.classList.remove("hidden");
   taskIdEl.textContent = payload.task_id;
   statusEl.textContent = "queued";
@@ -42,9 +48,19 @@ form.addEventListener("submit", async (event) => {
 });
 
 async function pollStatus(taskId) {
+  taskSection.classList.remove("hidden");
+  taskIdEl.textContent = taskId;
+
   const response = await fetch(`/status/${taskId}`);
   if (!response.ok) {
-    errorEl.textContent = "Не удалось получить статус задачи";
+    if (response.status === 404) {
+      clearPersistedTaskId(taskId);
+      errorEl.textContent = "Сохраненная задача больше недоступна";
+    } else {
+      errorEl.textContent = "Не удалось получить статус задачи";
+    }
+    downloadLinkEl.classList.add("hidden");
+    downloadLinkEl.href = "#";
     clearPoll();
     return;
   }
@@ -62,6 +78,7 @@ async function pollStatus(taskId) {
   }
 
   if (task.status === "completed") {
+    persistTaskId(taskId);
     downloadLinkEl.href = `/download/${taskId}`;
     downloadLinkEl.classList.remove("hidden");
     clearPoll();
@@ -89,4 +106,30 @@ function resetUi() {
   errorEl.textContent = "";
   downloadLinkEl.classList.add("hidden");
   downloadLinkEl.href = "#";
+}
+
+function persistTaskId(taskId) {
+  window.localStorage.setItem(TASK_STORAGE_KEY, taskId);
+}
+
+function clearPersistedTaskId(taskId = null) {
+  if (taskId === null || window.localStorage.getItem(TASK_STORAGE_KEY) === taskId) {
+    window.localStorage.removeItem(TASK_STORAGE_KEY);
+  }
+}
+
+function restoreTaskFromStorage() {
+  const taskId = window.localStorage.getItem(TASK_STORAGE_KEY);
+  if (!taskId) {
+    return;
+  }
+
+  taskSection.classList.remove("hidden");
+  taskIdEl.textContent = taskId;
+  statusEl.textContent = "queued";
+  progressTextEl.textContent = "0%";
+
+  clearPoll();
+  pollTimer = setInterval(() => pollStatus(taskId), 1500);
+  void pollStatus(taskId);
 }

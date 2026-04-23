@@ -40,7 +40,7 @@
 Пример запуска:
 
 ```bash
-NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f compose.yml -f compose.production.yml up -d --build web nginx
+NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f docker-compose.yml -f compose.production.yml up -d --build web bot nginx
 ```
 
 ## Практические рекомендации
@@ -54,6 +54,7 @@ NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f 
 - `core.service` использует модель, длительность и poll interval.
 - `telegram_bot.py` требует `BOT_TOKEN`.
 - `app.py` использует `FLASK_HOST` и `FLASK_PORT`.
+- `docker-compose.yml` и `compose.production.yml` должны монтировать `VIDEO_OUTPUT_DIR` как `/app/outputs` для runtime-сервисов, которым нужен доступ к MP4.
 - `compose.production.yml` использует `NGINX_DOMAIN` и `SSL_CERTS_DIR`.
 
 ## See Also

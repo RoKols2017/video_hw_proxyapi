@@ -7,7 +7,7 @@ Python project for homework-driven video generation through a Proxy API with thr
 
 ## Tech Stack
 - **Language:** Python 3.11+
-- **Framework:** None (CLI application)
+- **Framework:** Flask (web UI) plus thin CLI and Telegram adapters
 - **Database:** None
 - **ORM:** None
 
@@ -21,15 +21,17 @@ Python project for homework-driven video generation through a Proxy API with thr
 |-- test.py                      # Thin CLI entrypoint for status checks
 |-- bot.py                       # Thin Telegram bot entrypoint
 |-- app.py                       # Thin Flask app entrypoint
+|-- docker-compose.yml           # Default development Compose entry file
 |-- prompts/                     # Prompt assets used during project work
 |   `-- implementation_prompt.md
 |-- outputs/                     # Generated runtime artifacts such as downloaded videos
 |-- src/
 |   `-- video_app/
-|       |-- cli/                 # CLI wrappers around core services
-|       |-- config/              # Application configuration layer
-|       |-- core/                # Shared domain and integration logic
-|       `-- interfaces/          # Telegram and Flask interface implementations
+ |       |-- cli/                 # CLI wrappers and CLI-only helpers
+ |       |-- config/              # Application configuration layer
+ |       |-- core/                # Shared domain and integration logic
+ |       `-- interfaces/          # Telegram and Flask interface implementations
+|-- tests/                       # Regression tests for runtime and import boundaries
 |-- static/                      # Flask static assets (CSS/JS)
 |-- templates/                   # Flask HTML templates
 |-- pyproject.toml               # Python package metadata and dependencies
@@ -45,6 +47,7 @@ Python project for homework-driven video generation through a Proxy API with thr
 | `test.py` | Starts the status-check CLI flow by delegating to `src.video_app.cli.status_check.run`. |
 | `bot.py` | Starts Telegram polling flow via `src.video_app.interfaces.telegram_bot`. |
 | `app.py` | Starts Flask web app via `src.video_app.interfaces.flask_app`. |
+| `docker-compose.yml` | Default Docker Compose file for development and local runtime verification. |
 | `pyproject.toml` | Defines package metadata, Python requirement, and runtime dependencies. |
 | `.ai-factory/specs/hw-video-proxyapi-evolvable.md` | Captures the current implementation and architecture requirements for the homework project. |
 

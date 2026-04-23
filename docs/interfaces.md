@@ -7,7 +7,7 @@
 ### Точка входа
 
 ```bash
-python bot.py
+NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f docker-compose.yml -f compose.production.yml up -d --build bot
 ```
 
 ### Реализация
@@ -37,7 +37,7 @@ python bot.py
 ### Точка входа
 
 ```bash
-python app.py
+docker compose -f docker-compose.yml up --build web
 ```
 
 ### Реализация
@@ -60,6 +60,7 @@ python app.py
 ### Хранение состояния
 
 Используется in-memory словарь `tasks`, ключ — `task_id` (`uuid.uuid4()`).
+Для refresh-flow браузер дополнительно сохраняет текущий `task_id` в `localStorage`, чтобы после перезагрузки страницы возобновить polling и сохранить доступ к `/download/<task_id>`.
 
 ### Фоновое выполнение
 
@@ -71,6 +72,7 @@ python app.py
 - оба получают обновления через `on_update` callback;
 - оба не дублируют ProxyAPI-вызовы;
 - оба работают поверх общего конфигурационного слоя.
+- оба используют общий каталог `outputs/`, который должен быть доступен runtime-сервисам через Docker volume mount.
 
 ## See Also
 

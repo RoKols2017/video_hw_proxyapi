@@ -1,14 +1,14 @@
 # Architecture: Layered Architecture
 
 ## Overview
-This project uses a layered architecture adapted for a small Python CLI application with future interface expansion. The goal is to keep the current homework scope simple while preserving clear boundaries between configuration, reusable business logic, command-line interaction, and upcoming bot or web adapters.
+This project uses a layered architecture adapted for a small Python application that exposes the same workflow through CLI, Telegram, and Flask interfaces. The goal is to keep the implementation simple while preserving clear boundaries between configuration, reusable business logic, and interface-specific adapters.
 
 For this project, layered architecture is a better fit than heavier patterns because the domain is still compact, deployment is single-unit, and the main engineering need is separation of concerns rather than advanced domain modeling. The existing folder structure already reflects these boundaries and should be extended, not replaced.
 
 ## Decision Rationale
-- **Project type:** CLI application for Proxy API video generation with future Telegram and Flask reuse.
-- **Tech stack:** Python 3.11+, no framework, no database.
-- **Key factor:** keep implementation simple now while preventing CLI concerns from leaking into reusable backend logic.
+- **Project type:** Multi-interface Python application for Proxy API video generation.
+- **Tech stack:** Python 3.11+, Flask web UI, pyTelegramBotAPI bot, no database.
+- **Key factor:** keep shared workflow logic reusable across CLI, Telegram, and Flask without adding unnecessary architectural complexity.
 
 ## Folder Structure
 ```text

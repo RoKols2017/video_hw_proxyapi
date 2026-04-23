@@ -14,10 +14,10 @@
 
 Все production-процессы должны подниматься контейнерами.
 
-## Локальный запуск Flask напрямую
+## Локальный запуск через Docker
 
 ```bash
-python app.py
+docker compose -f docker-compose.yml up --build web
 ```
 
 По умолчанию сайт доступен на `http://localhost:5000`.
@@ -31,6 +31,7 @@ python app.py
 - `nginx` работает как reverse proxy;
 - `nginx` принимает `80/443`;
 - TLS-сертификаты монтируются с VPS в контейнер.
+- `web` и `bot` получают общий доступ к `./outputs:/app/outputs`.
 
 ## Что нужно на VPS
 
@@ -53,7 +54,7 @@ python app.py
 Команда запуска всех production-сервисов:
 
 ```bash
-NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f compose.yml -f compose.production.yml up -d --build web bot nginx
+NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f docker-compose.yml -f compose.production.yml up -d --build web bot nginx
 ```
 
 После запуска сайт будет доступен по:
@@ -72,7 +73,7 @@ https://example.com
 ## Остановка
 
 ```bash
-docker compose -f compose.yml -f compose.production.yml down
+docker compose -f docker-compose.yml -f compose.production.yml down
 ```
 
 ## Что проверить после деплоя
