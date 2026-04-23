@@ -10,23 +10,13 @@
 
 | Компонент | Требование |
 |-----------|------------|
-| Python | 3.11+ |
-| Пакетный менеджер | `pip` |
-| Основные зависимости | `openai`, `python-dotenv`, `flask`, `pyTelegramBotAPI` |
+| Docker | Docker Engine с Compose plugin |
 | Секреты | Только через `.env` |
 
-## Установка
+## Подготовка
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-Альтернатива:
-
-```bash
-pip install -e .
+mkdir -p outputs
 ```
 
 ## Настройка `.env`
@@ -54,20 +44,20 @@ FLASK_PORT=5000
 ### CLI
 
 ```bash
-python main.py
-python test.py
+docker compose -f docker-compose.yml --profile cli up app
+docker compose -f docker-compose.yml --profile status run --rm status
 ```
 
 ### Telegram-бот
 
 ```bash
-python bot.py
+NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f docker-compose.yml -f compose.production.yml up -d --build bot
 ```
 
 ### Flask
 
 ```bash
-python app.py
+docker compose -f docker-compose.yml up --build web
 ```
 
 После запуска сайт будет доступен на `http://localhost:5000`.
@@ -75,10 +65,10 @@ python app.py
 ## Что проверить
 
 - `.env` читается без хардкода секретов.
-- `outputs/` создаётся автоматически.
-- `python main.py` сохраняет `last_video_id.txt`.
-- `python test.py` может прочитать `video_id` из `outputs/`.
-- `bot.py` и `app.py` стартуют без автогенерации при import.
+- `outputs/` монтируется в контейнеры, которые читают или сохраняют MP4.
+- `docker compose -f docker-compose.yml --profile cli up app` сохраняет `last_video_id.txt`.
+- `docker compose -f docker-compose.yml --profile status run --rm status` может прочитать `video_id` из `outputs/`.
+- `app.py` не создает Flask app на import, а запускает его только через явный factory path.
 
 ## See Also
 

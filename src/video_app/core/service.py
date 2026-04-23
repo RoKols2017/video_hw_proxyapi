@@ -25,9 +25,66 @@ logger = logging.getLogger(__name__)
 
 StatusCallback = Callable[[VideoTaskStatus], None]
 
+_QUEUED_PROVIDER_STATUSES = {"queued", "pending", "submitted", "created"}
+_IN_PROGRESS_PROVIDER_STATUSES = {
+    "in_progress",
+    "in-progress",
+    "processing",
+    "running",
+    "generating",
+    "active",
+}
+_COMPLETED_PROVIDER_STATUSES = {"completed", "succeeded", "success", "done"}
+_FAILED_PROVIDER_STATUSES = {"failed", "error", "cancelled", "canceled", "expired"}
+
 
 class VideoServiceError(RuntimeError):
     pass
+
+
+def _normalize_provider_status(
+    raw_status: object,
+    *,
+    provider: str,
+    video_id: str,
+    error_message: str | None = None,
+) -> str:
+    normalized_input = str(raw_status or "").strip().lower()
+    logger.debug(
+        "[service._normalize_provider_status] normalizing provider status",
+        extra={
+            "provider": provider,
+            "video_id": video_id,
+            "raw_status": normalized_input,
+            "has_error_message": bool(error_message),
+        },
+    )
+
+    if normalized_input in _QUEUED_PROVIDER_STATUSES:
+        normalized_status = "queued"
+    elif normalized_input in _IN_PROGRESS_PROVIDER_STATUSES:
+        normalized_status = "in_progress"
+    elif normalized_input in _COMPLETED_PROVIDER_STATUSES:
+        normalized_status = "completed"
+    elif normalized_input in _FAILED_PROVIDER_STATUSES or error_message:
+        normalized_status = "failed"
+    else:
+        normalized_status = "in_progress"
+        logger.warning(
+            "[service._normalize_provider_status] unsupported provider status, defaulting to in_progress",
+            extra={"provider": provider, "video_id": video_id, "raw_status": normalized_input},
+        )
+
+    logger.info(
+        "[service._normalize_provider_status] provider status normalized",
+        extra={
+            "provider": provider,
+            "video_id": video_id,
+            "raw_status": normalized_input,
+            "normalized_status": normalized_status,
+        },
+    )
+    return normalized_status
 
 
 def create_video_task(prompt: str, settings: Settings) -> VideoTaskCreateResult:
@@ -220,9 +277,15 @@ def _create_sora_video(prompt: str, settings: Settings) -> VideoTaskCreateResult
     except Exception as exc:  # noqa: BLE001
         logger.error("[service._create_sora_video] create failed", exc_info=exc)
         raise VideoServiceError(f"Failed to create Sora video task: {exc}") from exc
+    video_id = str(pick_attr(payload, "id"))
+    normalized_status = _normalize_provider_status(
+        pick_attr(payload, "status", "queued"),
+        provider="openai",
+        video_id=video_id,
+    )
     return VideoTaskCreateResult(
-        video_id=str(pick_attr(payload, "id")),
-        status=str(pick_attr(payload, "status", "queued")),
+        video_id=video_id,
+        status=normalized_status,
         progress=_coerce_progress(pick_attr(payload, "progress")),
         model=str(pick_attr(payload, "model", settings.video_model)),
         seconds=int(pick_attr(payload, "seconds", settings.video_seconds)),
@@ -243,9 +306,17 @@ def _get_sora_status(video_id: str, settings: Settings) -> VideoTaskStatus:
     if error_payload is not None:
         error_message = str(pick_attr(error_payload, "message", error_payload))
 
+    resolved_video_id = str(pick_attr(payload, "id", video_id))
+    normalized_status = _normalize_provider_status(
+        pick_attr(payload, "status", "in_progress"),
+        provider="openai",
+        video_id=resolved_video_id,
+        error_message=error_message,
+    )
+
     return VideoTaskStatus(
-        video_id=str(pick_attr(payload, "id", video_id)),
-        status=str(pick_attr(payload, "status", "unknown")),
+        video_id=resolved_video_id,
+        status=normalized_status,
         progress=_coerce_progress(pick_attr(payload, "progress")),
         model=str(pick_attr(payload, "model", settings.video_model)),
         seconds=int(pick_attr(payload, "seconds", settings.video_seconds)),

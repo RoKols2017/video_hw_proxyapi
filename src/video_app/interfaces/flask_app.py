@@ -28,9 +28,6 @@ class WebTaskState:
 
 
 def create_flask_app() -> Flask:
-    settings = get_settings()
-    _configure_logging(settings.log_level)
-
     app = Flask(__name__, template_folder="../../../templates", static_folder="../../../static")
     tasks: dict[str, WebTaskState] = {}
     tasks_lock = threading.Lock()
@@ -43,7 +40,9 @@ def create_flask_app() -> Flask:
     def generate() -> tuple[dict[str, str], int]:
         payload = request.get_json(silent=True) or {}
         prompt = (payload.get("prompt") or request.form.get("prompt") or "").strip()
+        logger.debug("[flask_app.generate] request received", extra={"has_prompt": bool(prompt)})
         if not prompt:
+            logger.warning("[flask_app.generate] prompt missing")
             return {"error": "Prompt is required"}, 400
 
         task_id = str(uuid.uuid4())
@@ -62,6 +61,11 @@ def create_flask_app() -> Flask:
         )
         worker.start()
 
+        logger.info(
+            "[flask_app.generate] task created",
+            extra={"task_id": task_id, "status_url": f"/status/{task_id}", "download_url": f"/download/{task_id}"},
+        )
+
         return {
             "task_id": task_id,
             "status_url": f"/status/{task_id}",
@@ -70,24 +74,46 @@ def create_flask_app() -> Flask:
 
     @app.get("/status/<task_id>")
     def status(task_id: str):
+        logger.debug("[flask_app.status] fetching task status", extra={"task_id": task_id})
         with tasks_lock:
             task = tasks.get(task_id)
+            if task is not None and task.status == "completed" and task.output_path and not Path(task.output_path).exists():
+                logger.warning(
+                    "[flask_app.status] completed task output missing, converting to failed",
+                    extra={"task_id": task_id, "output_path": task.output_path},
+                )
+                task.status = "failed"
+                task.error_message = "Generated file not found"
         if task is None:
+            logger.warning("[flask_app.status] task not found", extra={"task_id": task_id})
             return {"error": "Task not found"}, 404
+        logger.info(
+            "[flask_app.status] task status returned",
+            extra={"task_id": task_id, "status": task.status, "has_output_path": bool(task.output_path)},
+        )
         return jsonify(asdict(task))
 
     @app.get("/download/<task_id>")
     def download(task_id: str):
+        logger.debug("[flask_app.download] download requested", extra={"task_id": task_id})
         with tasks_lock:
             task = tasks.get(task_id)
         if task is None:
+            logger.warning("[flask_app.download] task not found", extra={"task_id": task_id})
             abort(404, description="Task not found")
         if task.status != "completed" or not task.output_path:
+            logger.warning(
+                "[flask_app.download] video not ready",
+                extra={"task_id": task_id, "status": task.status, "has_output_path": bool(task.output_path)},
+            )
             abort(409, description="Video is not ready yet")
 
         path = Path(task.output_path)
         if not path.exists():
+            logger.warning("[flask_app.download] generated file missing", extra={"task_id": task_id, "output_path": str(path)})
             abort(404, description="Generated file not found")
+
+        logger.info("[flask_app.download] sending generated file", extra={"task_id": task_id, "output_path": str(path)})
 
         return send_file(path, as_attachment=True, download_name=f"{task.task_id}.mp4", mimetype="video/mp4")
 

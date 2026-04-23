@@ -8,7 +8,7 @@
 
 ```bash
 cp .env.example .env
-docker compose up --build web
+docker compose -f docker-compose.yml up --build web
 ```
 
 Для VPS этот проект разворачивается только через Docker Compose. `venv`, `pip install` и ручной запуск Python-процессов на сервере не требуются.
@@ -25,10 +25,9 @@ docker compose up --build web
 ## Example
 
 ```bash
-docker compose up --build web
-docker compose --profile cli up app
-docker compose --profile status run --rm status
-python bot.py
+docker compose -f docker-compose.yml up --build web
+docker compose -f docker-compose.yml --profile cli up app
+docker compose -f docker-compose.yml --profile status run --rm status
 ```
 
 ---
@@ -49,7 +48,7 @@ python bot.py
 Для production/VPS используется только Docker Compose:
 
 ```bash
-NGINX_DOMAIN=your-domain.com SSL_CERTS_DIR=/root/cert/your-domain.com docker compose -f compose.yml -f compose.production.yml up -d --build web bot nginx
+NGINX_DOMAIN=your-domain.com SSL_CERTS_DIR=/root/cert/your-domain.com docker compose -f docker-compose.yml -f compose.production.yml up -d --build web bot nginx
 ```
 
 Что поднимется:

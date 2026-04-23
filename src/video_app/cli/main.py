@@ -4,10 +4,10 @@ import logging
 import sys
 
 from src.video_app.config.settings import get_settings
+from src.video_app.cli.formatting import format_status_line
+from src.video_app.cli.state import save_last_video_id
 from src.video_app.core.models import VideoTaskStatus
-from src.video_app.core.progress import format_status_line
 from src.video_app.core.service import generate_video
-from src.video_app.core.storage import save_last_video_id
 
 
 logger = logging.getLogger(__name__)
