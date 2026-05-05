@@ -2,7 +2,46 @@
 
 > Генерация видео через ProxyAPI с единым backend, CLI, Telegram-ботом и Flask-сайтом.
 
-Проект покрывает обе части ДЗ: сначала консольный workflow генерации и проверки статуса, затем два интерфейса поверх того же service-layer. Основная бизнес-логика живёт в `src/video_app/core`, а CLI, Telegram и Flask только используют её.
+Проект собирает генерацию видео в один переиспользуемый backend: CLI, Telegram-бот и Flask-интерфейс работают через общий service-layer и не дублируют ProxyAPI-логику.
+
+## Какую задачу решает
+
+Если генерация видео запускается отдельно через скрипты, бот и web-интерфейс, логика статусов, скачивания и обработки ошибок быстро начинает расходиться между интерфейсами.
+
+Этот проект решает проблему за счет одного backend-слоя, который обслуживает сразу несколько способов запуска.
+
+## Что делает решение
+
+- принимает текстовый запрос на генерацию видео;
+- отправляет задачу в ProxyAPI;
+- отслеживает статусы `queued`, `in_progress`, `downloading`, `completed`, `failed`, `error`;
+- сохраняет MP4 в `outputs/`;
+- отдает один и тот же workflow через CLI, Telegram и Flask.
+
+## Что получает пользователь
+
+- единый сценарий генерации без расхождений между интерфейсами;
+- Telegram-бот для прикладного использования;
+- web-интерфейс с progress bar и download endpoint;
+- Docker-based запуск для локальной среды и VPS.
+
+## Proof: user flow
+
+```text
+text prompt
+  -> shared core.service
+  -> ProxyAPI task creation
+  -> status polling (queued -> in_progress -> downloading -> completed)
+  -> MP4 in outputs/
+  -> delivery through CLI, Telegram, or Flask
+```
+
+## Proof: what is actually implemented
+
+- CLI запускается через `main.py`, а проверка статуса - через `test.py`.
+- Telegram-бот принимает обычный текст как prompt, обновляет одно сообщение по мере прогресса и после завершения отправляет MP4.
+- Flask поднимает HTML-страницу, создает задачу через `POST /generate`, показывает статус через `GET /status/<task_id>` и отдает файл через `GET /download/<task_id>`.
+- Все интерфейсы работают через один `core.service`, а не через дублирующиеся ProxyAPI-вызовы в каждом слое.
 
 ## Quick Start
 
