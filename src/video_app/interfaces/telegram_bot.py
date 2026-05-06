@@ -124,12 +124,13 @@ def _run_generation_worker(
         with open(result.output_path, "rb") as video_file:
             bot.send_video(chat_id, video_file, caption=f"Готово. Модель: {result.model}")
     except VideoServiceError as exc:
-        _safe_edit_message(bot, chat_id, progress_message_id, f"Статус: failed\nОшибка: {exc}")
-        bot.send_message(chat_id, f"Ошибка генерации видео: {exc}")
+        logger.error("[telegram_bot._run_generation_worker] generation failed", exc_info=exc)
+        _safe_edit_message(bot, chat_id, progress_message_id, f"Статус: failed\nОшибка: {_public_error_message()}")
+        bot.send_message(chat_id, _public_error_message())
     except Exception as exc:  # noqa: BLE001
         logger.error("[telegram_bot._run_generation_worker] unexpected error", exc_info=exc)
-        _safe_edit_message(bot, chat_id, progress_message_id, f"Статус: error\nОшибка: {exc}")
-        bot.send_message(chat_id, f"Непредвиденная ошибка: {exc}")
+        _safe_edit_message(bot, chat_id, progress_message_id, f"Статус: error\nОшибка: {_public_error_message()}")
+        bot.send_message(chat_id, _public_error_message())
 
 
 def _format_status_text(status: VideoTaskStatus) -> str:
@@ -145,6 +146,10 @@ def _safe_edit_message(bot: Any, chat_id: int, message_id: int, text: str) -> No
         bot.edit_message_text(text, chat_id=chat_id, message_id=message_id)
     except Exception:  # noqa: BLE001
         pass
+
+
+def _public_error_message() -> str:
+    return "Generation failed. Check application logs for details."
 
 
 def _configure_logging(log_level: str) -> None:

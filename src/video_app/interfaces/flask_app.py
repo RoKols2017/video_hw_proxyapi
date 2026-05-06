@@ -150,12 +150,13 @@ def _run_web_generation_worker(
             task.output_path = result.output_path
             task.error_message = None
     except VideoServiceError as exc:
+        logger.error("[flask_app._run_web_generation_worker] generation failed", exc_info=exc, extra={"task_id": task_id})
         with tasks_lock:
             task = tasks.get(task_id)
             if task is None:
                 return
             task.status = "failed"
-            task.error_message = str(exc)
+            task.error_message = _public_error_message()
     except Exception as exc:  # noqa: BLE001
         logger.error("[flask_app._run_web_generation_worker] unexpected error", exc_info=exc)
         with tasks_lock:
@@ -163,7 +164,11 @@ def _run_web_generation_worker(
             if task is None:
                 return
             task.status = "error"
-            task.error_message = str(exc)
+            task.error_message = _public_error_message()
+
+
+def _public_error_message() -> str:
+    return "Generation failed. Check application logs for details."
 
 
 def _configure_logging(log_level: str) -> None:
