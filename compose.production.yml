@@ -17,6 +17,7 @@ services:
       - /tmp:rw,noexec,nosuid,size=64m
     volumes:
       - ./outputs:/app/outputs
+    restart: "no"
     pids_limit: 128
     mem_limit: 512m
     cpus: 1.0
@@ -35,6 +36,7 @@ services:
     command: python app.py
     volumes:
       - ./outputs:/app/outputs
+    restart: unless-stopped
     read_only: true
     security_opt:
       - no-new-privileges:true
@@ -60,6 +62,7 @@ services:
     command: python bot.py
     volumes:
       - ./outputs:/app/outputs
+    restart: unless-stopped
     read_only: true
     security_opt:
       - no-new-privileges:true
@@ -103,6 +106,7 @@ services:
     volumes:
       - ./docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
       - ${SSL_CERTS_DIR:?Set SSL_CERTS_DIR at deploy time}:/etc/nginx/certs:ro
+    restart: unless-stopped
     pids_limit: 64
     mem_limit: 128m
     cpus: 0.5

@@ -10,6 +10,7 @@ services:
     command: python main.py
     volumes:
       - ./outputs:/app/outputs
+    restart: "no"
     profiles:
       - cli
     stdin_open: true
@@ -26,8 +27,18 @@ services:
       - ./outputs:/app/outputs
     ports:
       - "5000:5000"
-    stdin_open: true
-    tty: true
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: .
+      target: development
+    env_file:
+      - .env
+    command: python bot.py
+    volumes:
+      - ./outputs:/app/outputs
+    restart: unless-stopped
 
   status:
     build:
@@ -38,6 +49,7 @@ services:
     command: python test.py
     volumes:
       - ./outputs:/app/outputs
+    restart: "no"
     profiles:
       - status
     stdin_open: true
