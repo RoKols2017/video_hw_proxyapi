@@ -28,7 +28,7 @@
 | `VIDEO_SECONDS` | только `4` |
 | `POLL_INTERVAL_SECONDS` | значение должно быть больше `0` |
 
-## Production-переменные для nginx в Docker
+## Optional production-переменные для nginx в Docker
 
 Эти значения не хранятся в проекте жёстко и передаются во время деплоя:
 
@@ -37,7 +37,7 @@
 | `NGINX_DOMAIN` | доменное имя для `server_name` |
 | `SSL_CERTS_DIR` | путь на VPS к каталогу с `fullchain.pem` и `privkey.pem` |
 
-Пример запуска:
+Пример запуска optional nginx overlay:
 
 ```bash
 NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f docker-compose.yml -f compose.production.yml up -d --build web bot nginx
@@ -48,6 +48,7 @@ NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f 
 - Не коммить рабочий `.env`.
 - Не хранить секреты в коде и README.
 - Для production-деплоя задавать домен и путь к сертификатам только командой запуска.
+- Если nginx overlay не используется, домен направляется на VPS, а Flask доступен по порту `5000` или через внешний reverse proxy.
 
 ## Где используются настройки
 

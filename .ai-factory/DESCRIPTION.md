@@ -26,6 +26,7 @@ Turn the existing console video-generation script into a reusable backend servic
   - `downloading`
   - `completed`
   - `failed`
+  - `error`
 - Save generated MP4 files to persistent storage.
 - Check task status from a dedicated status entrypoint.
 - Reuse one backend service layer across CLI, Telegram bot, and Flask site.
@@ -73,6 +74,7 @@ Preferred default:
 - **Deployment target:** VPS
 - **Database:** None for homework scope (in-memory task storage is acceptable)
 - **Integrations:** Proxy API via OpenAI-compatible client, Telegram Bot API, environment variables via `python-dotenv`
+- **AI tooling:** OpenCode, GPT-5.5, ai-factory
 
 ## Architecture Notes
 - The project must keep a **shared backend/service layer** that contains all video-generation business logic.
@@ -128,6 +130,7 @@ Required deployment characteristics:
 - UUID-based task tracking for web tasks
 - in-memory task state for homework scope
 - Dockerized VPS deployment
+- Portfolio packaging for `github.com/rokols2017`
 
 ## Development Workflow
 The project is intended to be developed iteratively with:

@@ -2,101 +2,116 @@
 
 # Deployment
 
-## Важно
-
-Для VPS-деплоя этот проект запускается только через Docker Compose.
-
-На сервере не нужны:
-
-- `python -m venv`
-- `pip install -r requirements.txt`
-- ручной запуск `python bot.py` или `python app.py`
-
-Все production-процессы должны подниматься контейнерами.
-
-## Локальный запуск через Docker
+## Local Docker Run
 
 ```bash
-docker compose -f docker-compose.yml up --build web
+cp .env.example .env
+mkdir -p outputs
+docker compose build
+docker compose up -d web bot
+docker compose logs -f
+docker compose ps
 ```
 
-По умолчанию сайт доступен на `http://localhost:5000`.
+The Flask app is available at `http://localhost:5000`.
 
-## Production в Docker
+## VPS Run
 
-Для production используется `compose.production.yml`, где:
+Install Docker Engine with the Compose plugin on the VPS, then run:
 
-- Flask-приложение запускается как сервис `web`;
-- Telegram-бот запускается как сервис `bot`;
-- `nginx` работает как reverse proxy;
-- `nginx` принимает `80/443`;
-- TLS-сертификаты монтируются с VPS в контейнер.
-- `web` и `bot` получают общий доступ к `./outputs:/app/outputs`.
+```bash
+git clone https://github.com/rokols2017/video_hw_proxyapi.git
+cd video_hw_proxyapi
+cp .env.example .env
+mkdir -p outputs
+docker compose up -d --build web bot
+docker compose logs -f
+docker compose ps
+```
 
-## Что нужно на VPS
+Fill `.env` before starting real generation:
 
-Каталог сертификатов должен содержать:
+- `PROXYAPI_API_KEY`
+- `BOT_TOKEN`
+- `VIDEO_MODEL=veo-3-fast`
+- `VIDEO_SECONDS=4`
+- `VIDEO_OUTPUT_DIR=outputs`
 
-- `fullchain.pem`
-- `privkey.pem`
+If the production image runs as a non-root user and the host directory is not writable, adjust ownership of `outputs/` for UID `1000` before using `compose.production.yml`.
 
-Пример расположения:
+## Domain
+
+Point the domain DNS A record to the VPS IP.
+
+If no reverse proxy is configured, the Flask app is available through the exposed port:
 
 ```text
-/root/cert/example.com/fullchain.pem
-/root/cert/example.com/privkey.pem
+http://<domain>:5000
+http://<server-ip>:5000
 ```
 
-## Домен задаётся во время деплоя
+This is enough for a basic homework demonstration if the VPS firewall allows port `5000`.
 
-Домен не хардкодится в проект. Он подставляется через `NGINX_DOMAIN` в шаблон nginx-конфига.
+## Optional nginx Overlay
 
-Команда запуска всех production-сервисов:
+The repository includes `compose.production.yml` and `docker/nginx/default.conf.template` for an nginx reverse proxy, but certificate issuance is not automated.
+
+Use this only if the VPS already has TLS certificates:
 
 ```bash
 NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f docker-compose.yml -f compose.production.yml up -d --build web bot nginx
 ```
 
-После запуска сайт будет доступен по:
+`SSL_CERTS_DIR` must contain:
 
-```text
-https://example.com
-```
+- `fullchain.pem`
+- `privkey.pem`
 
-## Что делает nginx
+After that, nginx proxies `https://<domain>` to `web:5000` inside Docker.
 
-- редиректит `http -> https`;
-- использует `server_name` из `NGINX_DOMAIN`;
-- подключает существующие сертификаты;
-- проксирует запросы на `web:5000` внутри Docker-сети.
+## Service Strategy
 
-## Остановка
+- `web` runs Flask through `python app.py`.
+- `bot` runs Telegram polling through `python bot.py`.
+- Both services use the same Docker image and `.env` file.
+- Both services mount `./outputs:/app/outputs`.
+- Long-running VPS services use `restart: unless-stopped`.
+
+## Common Commands
 
 ```bash
-docker compose -f docker-compose.yml -f compose.production.yml down
+docker compose build
+docker compose up -d web bot
+docker compose logs -f
+docker compose ps
+docker compose restart web bot
+docker compose down
 ```
 
-## Что проверить после деплоя
+CLI profile checks:
 
-- домен указывает на IP VPS;
-- сертификаты доступны в `SSL_CERTS_DIR`;
-- `https://<domain>` открывает Flask UI;
-- Telegram-бот отвечает через контейнер `bot`;
-- загрузка `/status/<task_id>` и `/download/<task_id>` работает;
-- `docker compose ps` показывает `web`, `bot`, `nginx` в статусе `Up`.
+```bash
+docker compose --profile cli run --rm app
+docker compose --profile status run --rm status
+```
 
-## Команды без Docker не нужны для VPS-деплоя
+## What To Check After Deploy
 
-Для production-деплоя на VPS не требуется:
+- `docker compose ps` shows `web` and `bot` as running.
+- `docker compose logs -f web` has no startup errors.
+- `docker compose logs -f bot` shows Telegram polling started.
+- Flask opens by IP/port or domain.
+- Telegram bot responds to `/start` and `/help`.
+- Generated MP4 files appear in `outputs/`.
 
-- `python -m venv`
-- `pip install -r requirements.txt`
-- запуск `bot.py` и `app.py` вручную через shell
+## Future Improvements
 
-Всё поднимается через Docker Compose.
+- Add automated HTTPS with Caddy, Traefik, nginx + Certbot, or a VPS panel.
+- Add persistent task storage such as Redis or SQLite.
+- Add CI checks for tests and Docker build.
 
 ## See Also
 
-- [Interfaces](interfaces.md) — какие сервисы публикуются наружу.
-- [Configuration](configuration.md) — deploy-переменные для домена и сертификатов.
-- [Getting Started](getting-started.md) — базовый локальный запуск до production-деплоя.
+- [Interfaces](interfaces.md)
+- [Configuration](configuration.md)
+- [Getting Started](getting-started.md)

@@ -7,7 +7,7 @@
 ### Точка входа
 
 ```bash
-NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f docker-compose.yml -f compose.production.yml up -d --build bot
+docker compose up -d --build bot
 ```
 
 ### Реализация
@@ -37,7 +37,7 @@ NGINX_DOMAIN=example.com SSL_CERTS_DIR=/root/cert/example.com docker compose -f 
 ### Точка входа
 
 ```bash
-docker compose -f docker-compose.yml up --build web
+docker compose up -d --build web
 ```
 
 ### Реализация
@@ -76,6 +76,6 @@ docker compose -f docker-compose.yml up --build web
 
 ## See Also
 
-- [Deployment](deployment.md) — как публиковать Flask через nginx в Docker.
+- [Deployment](deployment.md) — как запускать Flask и Telegram на VPS через Docker.
 - [Configuration](configuration.md) — `BOT_TOKEN`, `FLASK_HOST`, `FLASK_PORT` и deploy-переменные.
 - [Architecture](architecture.md) — роль service-layer в интерфейсах.
